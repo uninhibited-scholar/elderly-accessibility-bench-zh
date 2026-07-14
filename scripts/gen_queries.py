@@ -72,7 +72,24 @@ VARIANTS = {
    ("dialect","我要跟我娃打电话，号码寻不到咯")],
 }
 NOISE_LABEL = {"clean":"清晰","typo":"错别字","homophone":"同音混淆",
-               "ramble":"口语啰嗦","dialect":"方言词","voice":"语音转写"}
+               "ramble":"口语啰嗦","dialect":"方言词","voice":"语音转写",
+               "misleading":"误导埋点"}
+# v1 误导型：表面词指向 trap 意图，真实需求(intent)埋在啰嗦里；trap 作为干扰项
+HARD = [
+ # (真实intent, 文本, trap误导意图)
+ ("缴水电费","我孙子跟我说这个微信上就能弄那个费用，我点来点去净是些挂号买药的，我就想把这个月的水费电费给交咯，那个交费的地儿在哪啊","挂号看病"),
+ ("联系子女","刚才那个视频我也不想视频了，我就是想直接打个电话给我闺女，语音那种，可这号码咋翻都翻不着","视频通话"),
+ ("查养老金","不是买药也不是交费，我就想看看我那个退休金这个月到我卡上没有，别的都不弄","缴水电费"),
+ ("防诈咨询","有人发消息说我中奖了让我先交手续费才能领，还有个说是我养老金要重新认证让我转账，我这拿不准到底能不能转钱","查养老金"),
+ ("调大字体","这个买药的页面我也不买了，主要是字太小我看不清，你能不能先教我把手机字弄大点","买药"),
+ ("查公交","医院我一会儿再去，我现在就想知道我在这站等的那个公交车还有几分钟到，别的先不管","挂号看病"),
+ ("视频通话","电话我打过了没人接，我就想那种能看见孙子脸的那个功能，视频的，怎么开","联系子女"),
+ ("买药","天气我不看了，我就想在网上把我常吃的降压药买了，家里快没了","查天气"),
+ ("挂号看病","养老金我查过了，现在主要是我腰疼想在这手机上先约个号去骨科看看，别的不弄","查养老金"),
+ ("查天气","公交我不查了，我就想看看明天下不下雨，要下雨我就不出门了","查公交"),
+ ("联系子女","那个转账的事我没弄不敢弄，我就是想给我儿子打个电话问问他这事靠不靠谱，号码找不着","防诈咨询"),
+ ("缴水电费","养老金到了我知道了，现在是这个月水电费还没交，我想用手机交了它，就这一件事","查养老金"),
+]
 
 def gen():
     rng = random.Random(SEED)
@@ -91,6 +108,18 @@ def gen():
                          "text": text,
                          "probe": f"用户说：“{text}”。请判断用户想做什么？{body}。只输出选项字母。",
                          "gold": letter})
+    # v1 误导型：真实 intent + trap 干扰项 + 1 随机干扰
+    for it, text, trap in HARD:
+        qid += 1
+        third = rng.choice([x for x in intents if x not in (it, trap)])
+        opts = [it, trap, third]; rng.shuffle(opts)
+        letter = "ABC"[opts.index(it)]
+        body = "  ".join(f"{'ABC'[k]}. {o}" for k, o in enumerate(opts))
+        rows.append({"id": f"q{qid:03d}", "intent": it,
+                     "noise": "misleading", "noise_label": NOISE_LABEL["misleading"],
+                     "text": text,
+                     "probe": f"用户说：“{text}”。请判断用户想做什么？{body}。只输出选项字母。",
+                     "gold": letter})
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         for r in rows:

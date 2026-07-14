@@ -7,7 +7,7 @@ import json, os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data", "queries.jsonl")
 KEYS = {"id", "intent", "noise", "noise_label", "text", "probe", "gold"}
-NOISES = {"clean", "typo", "homophone", "ramble", "dialect", "voice"}
+NOISES = {"clean", "typo", "homophone", "ramble", "dialect", "voice", "misleading"}
 OPT_RE = re.compile(r"([ABC])\.\s*([^ ]+?)(?:\s{2,}|。只输出)")
 
 def main():
