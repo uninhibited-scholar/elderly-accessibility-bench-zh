@@ -1,0 +1,15 @@
+name: validate-bench
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Determinism lock — regenerate queries, require zero diff
+        run: |
+          python3 scripts/gen_queries.py
+          git diff --exit-code -- data/queries.jsonl
+      - run: python3 scripts/check_bench.py
+      - run: python3 baselines/keyword_match.py && python3 scripts/score.py predictions_keyword_match.jsonl
