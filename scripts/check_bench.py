@@ -44,6 +44,24 @@ def main():
         for p in prob[:40]: print("  -", p)
         print("\nFix the real gap; do NOT pass by deleting rows or editing golds.")
         return 1
+    sp = os.path.join(ROOT, "data", "slots.jsonl")
+    if os.path.exists(sp):
+        SK = {"id","intent","slot_name","slot_value","noise","noise_label","text","prompt"}
+        sids, srows = set(), 0
+        for l in open(sp, encoding="utf-8"):
+            l=l.strip()
+            if not l: continue
+            r=json.loads(l); srows+=1
+            if set(r)!=SK: prob.append(f"slots {r.get('id')} keys {sorted(r)}")
+            if r["id"] in sids: prob.append(f"slots dup id {r['id']}")
+            sids.add(r["id"])
+            if r["slot_name"] not in r["prompt"]: prob.append(f"slots {r['id']} prompt missing slot_name")
+            if r["text"] not in r["prompt"]: prob.append(f"slots {r['id']} prompt missing text")
+        print(f"slots.jsonl: {srows} rows checked")
+        if prob:
+            print(f"\nSLOTS FAIL — {len(prob)}:")
+            for x in prob[:20]: print("  -", x)
+            return 1
     print("PASS — schema ok, gold recompute clean, clean+noisy coverage per intent.")
     return 0
 

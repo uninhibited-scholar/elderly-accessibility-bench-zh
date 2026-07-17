@@ -11,5 +11,7 @@ jobs:
         run: |
           python3 scripts/gen_queries.py
           git diff --exit-code -- data/queries.jsonl
+          python3 scripts/gen_slots.py
+          git diff --exit-code -- data/slots.jsonl
       - run: python3 scripts/check_bench.py
       - run: python3 baselines/keyword_match.py && python3 scripts/score.py predictions_keyword_match.jsonl
